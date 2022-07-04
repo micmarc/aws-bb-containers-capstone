@@ -32,14 +32,14 @@ export default class PipelineConstruct extends Construct {
             )
             .teams(
                 new team.TeamPlatform(account),
-                new team.TeamApplication('gryffindor', account),
-                new team.TeamApplication('slytherin', account),
+                new team.TeamGryffindor(account),
+                new team.TeamSlytherin(account),
             );
 
-        // const bootstrapRepo: blueprints.ApplicationRepository = {
-        //     repoUrl: 'https://github.com/aws-samples/eks-blueprints-workloads.git',
-        //     targetRevision: 'workshop',
-        // }
+        const bootstrapRepo: blueprints.ApplicationRepository = {
+            repoUrl: 'https://github.com/aws-samples/eks-blueprints-workloads.git',
+            targetRevision: 'workshop',
+        }
         //
         // const devBootstrapArgo = new blueprints.ArgoCDAddOn({
         //     bootstrapRepo: {
