@@ -1,4 +1,5 @@
 import * as cdk from "aws-cdk-lib";
+import * as eks from "aws-cdk-lib/aws-eks"
 import {Construct} from "constructs";
 import * as blueprints from "@aws-quickstart/eks-blueprints";
 
@@ -11,14 +12,29 @@ export default class PipelineConstruct extends Construct {
         const account = props?.env?.account!;
         const region = props?.env?.region!;
 
+        const platformTeam = new team.TeamPlatform(account);
+        const teamGryffindor = new team.TeamGryffindor(account);
+        const teamSlytherin = new team.TeamSlytherin(account);
+
+        const fargateProfiles: Map<string, eks.FargateProfileOptions> = new Map([
+            [teamGryffindor.name, {selectors: [{namespace: teamGryffindor.name}]}],
+            [teamSlytherin.name, {selectors: [{namespace: teamSlytherin.name}]}],
+        ]);
+        const clusterProvider = new blueprints.FargateClusterProvider({
+            fargateProfiles,
+            version: eks.KubernetesVersion.V1_20
+        });
+
         const blueprint = blueprints.EksBlueprint.builder()
             .account(account)
             .region(region)
+            .clusterProvider(clusterProvider)
+            .teams(platformTeam, teamGryffindor, teamSlytherin)
             .addOns(
                 new blueprints.AwsLoadBalancerControllerAddOn,
                 new blueprints.NginxAddOn,
                 // new blueprints.ArgoCDAddOn,
-                new blueprints.AppMeshAddOn( {
+                new blueprints.AppMeshAddOn({
                     enableTracing: true
                 }),
                 // SSMAgentAddOn handles PVRE as it is adding correct role to the node group, otherwise stack destroy won't work
@@ -29,17 +45,12 @@ export default class PipelineConstruct extends Construct {
                 new blueprints.ContainerInsightsAddOn,
                 new blueprints.XrayAddOn,
                 new blueprints.SecretsStoreAddOn
-            )
-            .teams(
-                new team.TeamPlatform(account),
-                new team.TeamGryffindor(account),
-                new team.TeamSlytherin(account),
             );
 
-        const bootstrapRepo: blueprints.ApplicationRepository = {
-            repoUrl: 'https://github.com/aws-samples/eks-blueprints-workloads.git',
-            targetRevision: 'workshop',
-        }
+        // const bootstrapRepo: blueprints.ApplicationRepository = {
+        //     repoUrl: 'https://github.com/aws-samples/eks-blueprints-workloads.git',
+        //     targetRevision: 'workshop',
+        // }
         //
         // const devBootstrapArgo = new blueprints.ArgoCDAddOn({
         //     bootstrapRepo: {
