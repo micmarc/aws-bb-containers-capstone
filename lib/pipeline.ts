@@ -33,11 +33,9 @@ export default class PipelineConstruct extends Construct {
             .addOns(
                 new blueprints.AwsLoadBalancerControllerAddOn,
                 new blueprints.NginxAddOn,
-                // new blueprints.ArgoCDAddOn,
                 new blueprints.AppMeshAddOn({
                     enableTracing: true
                 }),
-                // SSMAgentAddOn handles PVRE as it is adding correct role to the node group, otherwise stack destroy won't work
                 new blueprints.SSMAgentAddOn,
                 new blueprints.CalicoOperatorAddOn,
                 new blueprints.MetricsServerAddOn,
@@ -47,29 +45,9 @@ export default class PipelineConstruct extends Construct {
                 new blueprints.SecretsStoreAddOn
             );
 
-        // const bootstrapRepo: blueprints.ApplicationRepository = {
-        //     repoUrl: 'https://github.com/aws-samples/eks-blueprints-workloads.git',
-        //     targetRevision: 'workshop',
-        // }
-        //
-        // const devBootstrapArgo = new blueprints.ArgoCDAddOn({
-        //     bootstrapRepo: {
-        //         ...bootstrapRepo,
-        //         path: 'envs/dev'
-        //     },
-        // });
-        // const testBootstrapArgo = new blueprints.ArgoCDAddOn({
-        //     bootstrapRepo: {
-        //         ...bootstrapRepo,
-        //         path: 'envs/test'
-        //     },
-        // });
-        // const prodBootstrapArgo = new blueprints.ArgoCDAddOn({
-        //     bootstrapRepo: {
-        //         ...bootstrapRepo,
-        //         path: 'envs/prod'
-        //     },
-        // });
+        const devBootstrapArgo = createArgoAddonConfig("dev");
+        const testBootstrapArgo = createArgoAddonConfig("test");
+        const prodBootstrapArgo = createArgoAddonConfig("prod");
 
         blueprints.CodePipelineStack.builder()
             .name("aws-bb-containers-capstone-pipeline")
@@ -82,11 +60,69 @@ export default class PipelineConstruct extends Construct {
             .wave({
                 id: "envs",
                 stages: [
-                    {id: "dev", stackBuilder: blueprint.clone('us-west-2')}, //.addOns(devBootstrapArgo)},
-                    {id: "test", stackBuilder: blueprint.clone('us-east-2')}, //.addOns(testBootstrapArgo)},
-                    {id: "prod", stackBuilder: blueprint.clone('us-east-1')}, //.addOns(prodBootstrapArgo)},
+                    {id: "dev", stackBuilder: blueprint.clone('us-west-2').addOns(devBootstrapArgo)},
+                    {id: "test", stackBuilder: blueprint.clone('us-east-2').addOns(testBootstrapArgo)},
+                    {id: "prod", stackBuilder: blueprint.clone('us-east-1').addOns(prodBootstrapArgo)},
                 ],
             })
             .build(scope, id + "-stack", props);
     }
+}
+
+function createArgoAddonConfig(environment: string): blueprints.ArgoCDAddOn {
+    interface argoProjectParams {
+        githubOrg: string,
+        githubRepository: string,
+        projectNamespace: string
+    }
+
+    let argoAdditionalProject: Array<Record<string, unknown>> = [];
+    const projectNameList: argoProjectParams[] =
+        [
+            {githubOrg: "micmarc", githubRepository: "ecsdemo-frontend", projectNamespace: "team-slytherin"},
+            {githubOrg: "micmarc", githubRepository: "ecsdemo-nodejs", projectNamespace: "team-gryffindor"},
+        ];
+
+    projectNameList.forEach(element => {
+        argoAdditionalProject.push(
+            {
+                name: element.githubRepository,
+                namespace: "argocd",
+                destinations: [{
+                    namespace: element.projectNamespace,
+                    server: "https://kubernetes.default.svc"
+                }],
+                sourceRepos: [
+                    `https://github.com/${element.githubOrg}/${element.githubRepository}.git`,
+                ],
+            }
+        );
+    });
+
+    return new blueprints.ArgoCDAddOn(
+        {
+            bootstrapRepo: {
+                repoUrl: "https://github.com/micmarc/aws-bb-containers-capstone-workloads.git",
+                path: `envs/${environment}`,
+                targetRevision: "main",
+                credentialsSecretName: "github-token-json",
+                credentialsType: "TOKEN"
+            },
+            bootstrapValues: {
+                service: {
+                    type: "LoadBalancer"
+                },
+                spec: {
+                    ingress: {
+                        host: "dev.blueprint.com",
+                    },
+                },
+            },
+            values: {
+                server: {
+                    additionalProjects: argoAdditionalProject,
+                }
+            }
+        }
+    )
 }
