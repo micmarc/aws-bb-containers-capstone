@@ -33,16 +33,17 @@ export default class PipelineConstruct extends Construct {
             .addOns(
                 new blueprints.AwsLoadBalancerControllerAddOn,
                 new blueprints.NginxAddOn,
-                new blueprints.AppMeshAddOn({
-                    enableTracing: true
-                }),
-                new blueprints.SSMAgentAddOn,
                 new blueprints.CalicoOperatorAddOn,
                 new blueprints.MetricsServerAddOn,
-                new blueprints.ClusterAutoScalerAddOn,
-                new blueprints.ContainerInsightsAddOn,
-                new blueprints.XrayAddOn,
-                new blueprints.SecretsStoreAddOn
+                new blueprints.SecretsStoreAddOn,
+                // The add-ons below are supported for EKS EC2 only
+                // new blueprints.AppMeshAddOn({
+                //     enableTracing: true
+                // }),
+                // new blueprints.SSMAgentAddOn,
+                // new blueprints.ClusterAutoScalerAddOn,
+                // new blueprints.ContainerInsightsAddOn,
+                // new blueprints.XrayAddOn,
             );
 
         const devBootstrapArgo = createArgoAddonConfig("dev");
