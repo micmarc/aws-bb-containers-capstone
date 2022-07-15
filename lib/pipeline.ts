@@ -62,8 +62,8 @@ export default class PipelineConstruct extends Construct {
                 id: "envs",
                 stages: [
                     {id: "dev", stackBuilder: blueprint.clone('us-west-2').addOns(devBootstrapArgo)},
-                    {id: "test", stackBuilder: blueprint.clone('us-east-2').addOns(testBootstrapArgo)},
-                    {id: "prod", stackBuilder: blueprint.clone('us-east-1').addOns(prodBootstrapArgo)},
+                    // {id: "test", stackBuilder: blueprint.clone('us-east-2').addOns(testBootstrapArgo)},
+                    // {id: "prod", stackBuilder: blueprint.clone('us-east-1').addOns(prodBootstrapArgo)},
                 ],
             })
             .build(scope, id + "-stack", props);
@@ -110,13 +110,8 @@ function createArgoAddonConfig(environment: string): blueprints.ArgoCDAddOn {
                 credentialsType: "TOKEN"
             },
             bootstrapValues: {
-                service: {
-                    type: "LoadBalancer"
-                },
                 spec: {
-                    ingress: {
-                        host: "dev.blueprint.com",
-                    },
+                    type: "LoadBalancer"
                 },
             },
             values: {
