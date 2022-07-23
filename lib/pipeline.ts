@@ -109,14 +109,17 @@ function createArgoAddonConfig(environment: string): blueprints.ArgoCDAddOn {
                 credentialsSecretName: "github-token-json",
                 credentialsType: "TOKEN"
             },
-            bootstrapValues: {
-                spec: {
-                    type: "LoadBalancer"
-                },
-            },
+            // bootstrapValues: {
+            //     spec: {
+            //         type: "LoadBalancer"
+            //     },
+            // },
             values: {
                 server: {
                     additionalProjects: argoAdditionalProject,
+                    spec: {
+                        type: "LoadBalancer"
+                    },
                 }
             }
         }
