@@ -16,21 +16,9 @@ export default class PipelineConstruct extends Construct {
         const teamGryffindor = new team.TeamGryffindor(account);
         const teamSlytherin = new team.TeamSlytherin(account);
 
-        const fargateProfiles: Map<string, eks.FargateProfileOptions> = new Map([
-            ['argocd', {selectors: [{namespace: 'argocd'}]}],
-            ['calico-operator', {selectors: [{namespace: 'calico-operator'}]}],
-            [teamGryffindor.name, {selectors: [{namespace: teamGryffindor.name}]}],
-            [teamSlytherin.name, {selectors: [{namespace: teamSlytherin.name}]}],
-        ]);
-        const clusterProvider = new blueprints.FargateClusterProvider({
-            fargateProfiles,
-            version: eks.KubernetesVersion.V1_20
-        });
-
         const blueprint = blueprints.EksBlueprint.builder()
             .account(account)
             .region(region)
-            .clusterProvider(clusterProvider)
             .teams(platformTeam, teamGryffindor, teamSlytherin)
             .addOns(
                 new blueprints.AwsLoadBalancerControllerAddOn,
@@ -39,13 +27,13 @@ export default class PipelineConstruct extends Construct {
                 new blueprints.MetricsServerAddOn,
                 new blueprints.SecretsStoreAddOn,
                 // The add-ons below are supported for EKS EC2 only
-                // new blueprints.AppMeshAddOn({
-                //     enableTracing: true
-                // }),
-                // new blueprints.SSMAgentAddOn,
-                // new blueprints.ClusterAutoScalerAddOn,
-                // new blueprints.ContainerInsightsAddOn,
-                // new blueprints.XrayAddOn,
+                new blueprints.AppMeshAddOn({
+                    enableTracing: true
+                }),
+                new blueprints.SSMAgentAddOn,
+                new blueprints.ClusterAutoScalerAddOn,
+                new blueprints.ContainerInsightsAddOn,
+                new blueprints.XrayAddOn,
             );
 
         const devBootstrapArgo = createArgoAddonConfig("dev");
