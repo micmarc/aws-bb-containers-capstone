@@ -17,6 +17,8 @@ export default class PipelineConstruct extends Construct {
         const teamSlytherin = new team.TeamSlytherin(account);
 
         const fargateProfiles: Map<string, eks.FargateProfileOptions> = new Map([
+            ['argocd', {selectors: [{namespace: 'argocd'}]}],
+            ['calico-operator', {selectors: [{namespace: 'calico-operator'}]}],
             [teamGryffindor.name, {selectors: [{namespace: teamGryffindor.name}]}],
             [teamSlytherin.name, {selectors: [{namespace: teamSlytherin.name}]}],
         ]);
@@ -117,9 +119,6 @@ function createArgoAddonConfig(environment: string): blueprints.ArgoCDAddOn {
             values: {
                 server: {
                     additionalProjects: argoAdditionalProject,
-                    spec: {
-                        type: "LoadBalancer"
-                    },
                 }
             }
         }
