@@ -1,5 +1,4 @@
 import * as cdk from "aws-cdk-lib";
-import * as eks from "aws-cdk-lib/aws-eks"
 import {Construct} from "constructs";
 import * as blueprints from "@aws-quickstart/eks-blueprints";
 
@@ -14,12 +13,13 @@ export default class PipelineConstruct extends Construct {
 
         const platformTeam = new team.TeamPlatform(account);
         const teamGryffindor = new team.TeamGryffindor(account);
+        const teamHufflepuff = new team.TeamHufflepuff(account);
         const teamSlytherin = new team.TeamSlytherin(account);
 
         const blueprint = blueprints.EksBlueprint.builder()
             .account(account)
             .region(region)
-            .teams(platformTeam, teamGryffindor, teamSlytherin)
+            .teams(platformTeam, teamGryffindor, teamHufflepuff, teamSlytherin)
             .addOns(
                 new blueprints.AwsLoadBalancerControllerAddOn,
                 new blueprints.NginxAddOn,
@@ -70,6 +70,7 @@ function createArgoAddonConfig(environment: string): blueprints.ArgoCDAddOn {
     let argoAdditionalProject: Array<Record<string, unknown>> = [];
     const projectNameList: argoProjectParams[] =
         [
+            {githubOrg: "micmarc", githubRepository: "ecsdemo-crystal", projectNamespace: "team-hufflepuff"},
             {githubOrg: "micmarc", githubRepository: "ecsdemo-frontend", projectNamespace: "team-slytherin"},
             {githubOrg: "micmarc", githubRepository: "ecsdemo-nodejs", projectNamespace: "team-gryffindor"},
         ];
@@ -99,14 +100,12 @@ function createArgoAddonConfig(environment: string): blueprints.ArgoCDAddOn {
                 credentialsSecretName: "github-token-json",
                 credentialsType: "TOKEN"
             },
-            // bootstrapValues: {
-            //     spec: {
-            //         type: "LoadBalancer"
-            //     },
-            // },
             values: {
                 server: {
                     additionalProjects: argoAdditionalProject,
+                    service: {
+                        type: "LoadBalancer",
+                    },
                 }
             }
         }

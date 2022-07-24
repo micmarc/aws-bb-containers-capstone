@@ -11,6 +11,15 @@ export class TeamGryffindor extends ApplicationTeam {
     }
 }
 
+export class TeamHufflepuff extends ApplicationTeam {
+    constructor(accountID: string) {
+        super({
+            name: 'hufflepuff',
+            users: [new ArnPrincipal(`arn:aws:iam::${accountID}:user/application-hufflepuff`)]
+        });
+    }
+}
+
 export class TeamSlytherin extends ApplicationTeam {
     constructor(accountID: string) {
         super({

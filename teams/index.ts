@@ -1,2 +1,2 @@
-export { TeamPlatform } from './platform-team';
-export { TeamGryffindor, TeamSlytherin } from './application-team';
+export * from './platform-team';
+export * from './application-team';
